@@ -2,6 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+# ------- Step 1: feed.xml 생성 -------
+
 url = "https://aict.snu.ac.kr/?p=92"
 base_url = "https://aict.snu.ac.kr"
 post_base = "https://aict.snu.ac.kr/?p=92&page=1&viewMode=view&reqIdx="
@@ -18,12 +20,13 @@ for item in items:
     title_tag = item.select_one("span.title a")
     title = title_tag.text.strip()
 
-    # ✔️ 여기서 reqIdx 추출
     raw_href = title_tag["href"]
     if "reqIdx=" in raw_href:
         req_idx = raw_href.split("reqIdx=")[-1]
+    elif "idx=" in raw_href:
+        req_idx = raw_href.split("idx=")[-1]
     else:
-        req_idx = raw_href.split("idx=")[-1]  # 예비용 처리
+        req_idx = raw_href[-18:]  # fallback
 
     fixed_link = post_base + req_idx
 
@@ -57,3 +60,40 @@ with open("feed.xml", "w", encoding="utf-8") as f:
     f.write(rss)
 
 print("✅ feed.xml 생성 완료")
+
+# ------- Step 2: latest.html 바로 생성 -------
+
+rss_soup = BeautifulSoup(rss, "xml")
+items = rss_soup.find_all("item")[:5]
+
+cards = ""
+
+for item in items:
+    title = item.title.text
+    link = item.link.text.strip()
+    img_tag = BeautifulSoup(item.description.text, "html.parser").find("img")
+    img = img_tag["src"] if img_tag else ""
+
+    cards += f'''
+    <a href="{link}" target="_blank" style="text-decoration: none; color: black; width: 100px; text-align: center;">
+      <img src="{img}" width="100" height="80" style="object-fit: cover; border-radius: 4px;">
+      <div style="font-size: 11px; margin-top: 4px;">{title}</div>
+    </a>
+    '''
+
+html = f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body>
+<div style="display: flex; gap: 10px; font-family: sans-serif;">
+  {cards}
+</div>
+</body>
+</html>
+"""
+
+with open("latest.html", "w", encoding="utf-8") as f:
+    f.write(html)
+
+print("✅ latest.html 생성 완료")
