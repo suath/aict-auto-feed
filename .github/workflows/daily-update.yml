@@ -2,7 +2,7 @@ name: 자동으로 feed.xml + latest.html 생성
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * *'  # 매일 09:00 KST
   workflow_dispatch:
 
 jobs:
@@ -21,20 +21,14 @@ jobs:
       - name: 라이브러리 설치
         run: pip install beautifulsoup4 requests lxml
 
-      - name: feed.xml 생성
+      - name: feed.xml + latest.html 생성 (통합 실행)
         run: python fetch_and_generate.py
 
-      - name: latest.html 생성 (기존 삭제 후 생성)
-        run: |
-          echo "✅ feed 내용 확인:"
-          cat feed.xml
-          rm -f latest.html
-          python html_generator.py
-
-      - name: 강제 커밋 & 푸시
+      - name: 변경사항 커밋 및 푸시
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "♻️ 강제 커밋: latest.html 재생성" || echo "✅ 변경 없음 - 건너뜀"
+          git add feed.xml latest.html
+          git commit -m "♻️ 자동 생성: feed + html" || echo "변경 없음"
           git push
+
