@@ -1,4 +1,3 @@
-
 from bs4 import BeautifulSoup
 
 with open("feed.xml", "r", encoding="utf-8") as f:
@@ -10,7 +9,7 @@ cards = ""
 
 for item in items:
     title = item.title.text
-    link = item.link.text
+    link = item.link.text  # ✅ 여기서 링크 가져옴
     img = BeautifulSoup(item.description.text, "html.parser").find("img")["src"]
 
     cards += f'''
