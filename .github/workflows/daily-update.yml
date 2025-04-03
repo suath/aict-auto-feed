@@ -21,18 +21,20 @@ jobs:
       - name: 라이브러리 설치
         run: pip install beautifulsoup4 requests lxml
 
-      - name: 최신 feed.xml 생성
+      - name: feed.xml 생성
         run: python fetch_and_generate.py
 
-      - name: latest.html 생성
+      - name: latest.html 생성 (기존 삭제 후 생성)
         run: |
-          rm -f latest.html  # ❗ 기존 파일 삭제 (덮어쓰기 방지)
+          echo "✅ feed 내용 확인:"
+          cat feed.xml
+          rm -f latest.html
           python html_generator.py
 
-      - name: 결과 커밋 & 푸시
+      - name: 강제 커밋 & 푸시
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add feed.xml latest.html
-          git diff-index --quiet HEAD || git commit -m "🤖 자동 생성된 최신 게시물 feed"
+          git add .
+          git commit -m "♻️ 강제 커밋: latest.html 재생성" || echo "✅ 변경 없음 - 건너뜀"
           git push
