@@ -1,24 +1,31 @@
-
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 
 url = "https://aict.snu.ac.kr/?p=92"
 base_url = "https://aict.snu.ac.kr"
+post_base = "https://aict.snu.ac.kr/?p=92&page=1&viewMode=view&reqIdx="
 
 res = requests.get(url)
 soup = BeautifulSoup(res.text, "html.parser")
 
 items = soup.select(".gallery_list li")[:5]
-
 now = datetime.now().strftime("%a, %d %b %Y %H:%M:%S +0900")
+
 rss_items = ""
 
 for item in items:
     title_tag = item.select_one("span.title a")
     title = title_tag.text.strip()
-    raw_link = title_tag["href"]
-    link = base_url + raw_link if not raw_link.startswith("http") else raw_link
+
+    # ✔️ 여기서 reqIdx 추출
+    raw_href = title_tag["href"]
+    if "reqIdx=" in raw_href:
+        req_idx = raw_href.split("reqIdx=")[-1]
+    else:
+        req_idx = raw_href.split("idx=")[-1]  # 예비용 처리
+
+    fixed_link = post_base + req_idx
 
     img_tag = item.select_one("span.photo img")
     img_url = base_url + img_tag["src"] if img_tag else ""
@@ -26,11 +33,11 @@ for item in items:
     rss_items += f"""
   <item>
     <title>{title}</title>
-    <link>{link}</link>
+    <link>{fixed_link}</link>
     <pubDate>{now}</pubDate>
     <description><![CDATA[
       <img src="{img_url}" width="500"><br>
-      <a href="{link}">{title}</a>
+      <a href="{fixed_link}">{title}</a>
     ]]></description>
   </item>
 """
